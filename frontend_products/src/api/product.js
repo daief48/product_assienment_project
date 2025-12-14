@@ -1,23 +1,33 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api/products',
+  baseURL: 'http://localhost:8000/api',
+  withCredentials: true, // required if using session + CSRF
 });
 
 export default {
-  getProducts(params) {
-    return api.get('/', { params });
+  getProducts(params = {}) {
+    return api.get('/products', { params });
   },
+
   getProduct(id) {
-    return api.get(`/${id}`);
+    return api.get(`/products/${id}`);
   },
+
   createProduct(data) {
-    return api.post('/', data, { headers: { 'Content-Type': 'multipart/form-data' } });
+    return api.post('/products', data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
   },
+
   updateProduct(id, data) {
-    return api.put(`/${id}`, data, { headers: { 'Content-Type': 'multipart/form-data' } });
+    if (data instanceof FormData) data.append('_method', 'PUT');
+    return api.post(`/products/${id}`, data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
   },
+
   deleteProduct(id) {
-    return api.delete(`/${id}`);
+    return api.delete(`/products/${id}`);
   },
 };

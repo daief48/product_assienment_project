@@ -1,99 +1,110 @@
 <template>
-    <div class="p-6 bg-gray-50 min-h-screen">
-        <h2 class="text-2xl font-bold mb-6 text-gray-800">Product Inventory</h2>
+  <div>
+    <h2 class="text-xl font-bold mb-4">Product List</h2>
 
-        <div class="mb-4 flex items-center">
-            <input v-model="search" placeholder="Search by Name or SKU..."
-                class="flex-1 border rounded-lg px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
-        </div>
+    <!-- Search -->
+    <input
+      v-model="search"
+      @input="onSearch"
+      placeholder="Search products..."
+      class="border p-2 mb-4 w-full rounded shadow"
+    />
 
-        <div class="overflow-x-auto bg-white rounded-lg shadow">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-100">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-gray-600 uppercase text-sm font-medium">Name</th>
-                        <th class="px-6 py-3 text-left text-gray-600 uppercase text-sm font-medium">SKU</th>
-                        <th class="px-6 py-3 text-left text-gray-600 uppercase text-sm font-medium">Price</th>
-                        <th class="px-6 py-3 text-left text-gray-600 uppercase text-sm font-medium">Stock</th>
-                        <th class="px-6 py-3 text-left text-gray-600 uppercase text-sm font-medium">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    <tr v-for="product in filteredProducts" :key="product.id"
-                        class="hover:bg-gray-50 transition duration-150">
-                        <td class="px-6 py-4 text-gray-700">{{ product.name }}</td>
-                        <td class="px-6 py-4 text-gray-500">{{ product.sku }}</td>
-                        <td class="px-6 py-4 text-gray-700 font-semibold">${{ product.price }}</td>
-                        <td class="px-6 py-4 text-gray-700">{{ product.stock }}</td>
-                        <td class="px-6 py-4 flex space-x-2">
-                            <button @click="editProduct(product)"
-                                class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md transition">
-                                Edit
-                            </button>
-                            <button @click="deleteProduct(product.id)"
-                                class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md transition">
-                                Delete
-                            </button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+    <!-- Table -->
+    <table class="min-w-full border rounded-lg overflow-hidden shadow">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="border px-4 py-2 text-left">Name</th>
+          <th class="border px-4 py-2 text-left">SKU</th>
+          <th class="border px-4 py-2 text-left">Price</th>
+          <th class="border px-4 py-2 text-left">Stock</th>
+          <th class="border px-4 py-2 text-left">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="product in products" :key="product.id" class="hover:bg-gray-50">
+          <td class="border px-4 py-2">{{ product.name }}</td>
+          <td class="border px-4 py-2">{{ product.sku }}</td>
+          <td class="border px-4 py-2">{{ product.price }}</td>
+          <td class="border px-4 py-2">{{ product.stock }}</td>
+          <td class="border px-4 py-2">
+            <button @click="editProduct(product)" class="bg-blue-500 text-white px-3 py-1 rounded mr-2 hover:bg-blue-600">Edit</button>
+            <button @click="deleteProduct(product.id)" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">Delete</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
-        <div class="mt-6 flex justify-center items-center space-x-2">
-            <button @click="goToPage(currentPage - 1)" :disabled="currentPage === 1"
-                class="px-4 py-2 rounded-md border bg-white hover:bg-gray-100 disabled:opacity-50">
-                Previous
-            </button>
+    <!-- Pagination -->
+    <div class="flex justify-center mt-4 space-x-2">
+      <button
+        @click="changePage(currentPage - 1)"
+        :disabled="currentPage === 1"
+        class="px-3 py-1 border rounded hover:bg-gray-200 disabled:opacity-50"
+      >
+        Prev
+      </button>
 
-            <span class="px-4 py-2 text-gray-600 font-medium">
-                Page {{ currentPage }} of {{ lastPage }}
-            </span>
+      <button
+        v-for="page in pages"
+        :key="page"
+        @click="changePage(page)"
+        :class="['px-3 py-1 border rounded hover:bg-gray-200', { 'bg-blue-500 text-white': page === currentPage }]"
+      >
+        {{ page }}
+      </button>
 
-            <button @click="goToPage(currentPage + 1)" :disabled="currentPage === lastPage"
-                class="px-4 py-2 rounded-md border bg-white hover:bg-gray-100 disabled:opacity-50">
-                Next
-            </button>
-        </div>
+      <button
+        @click="changePage(currentPage + 1)"
+        :disabled="currentPage === lastPage"
+        class="px-3 py-1 border rounded hover:bg-gray-200 disabled:opacity-50"
+      >
+        Next
+      </button>
     </div>
+  </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue'
+<script>
+import { mapActions, mapGetters } from 'vuex';
 
-const search = ref('')
-const products = ref([])
-const currentPage = ref(1)
-const lastPage = ref(1)
-
-const fetchProducts = async (page = 1) => {
-    const res = await fetch(`http://localhost:8000/api/products?page=${page}`)
-    const json = await res.json()
-
-    products.value = json.data
-    currentPage.value = json.current_page
-    lastPage.value = json.last_page
-}
-
-const filteredProducts = computed(() => {
-    return products.value.filter(
-        p =>
-            p.name.toLowerCase().includes(search.value.toLowerCase()) ||
-            p.sku.toLowerCase().includes(search.value.toLowerCase())
-    )
-})
-
-const goToPage = (page) => {
-    if (page >= 1 && page <= lastPage.value) fetchProducts(page)
-}
-
-const editProduct = (product) => {
-    console.log('Edit', product)
-}
-
-const deleteProduct = (id) => {
-    console.log('Delete', id)
-}
-
-onMounted(() => fetchProducts())
+export default {
+  data() {
+    return {
+      search: '',
+      searchTimeout: null,
+    };
+  },
+  computed: {
+    ...mapGetters(['allProducts', 'currentPage', 'lastPage']),
+    products() {
+      return this.allProducts;
+    },
+    pages() {
+      // Simple array of pages for pagination buttons
+      const arr = [];
+      for (let i = 1; i <= this.lastPage; i++) arr.push(i);
+      return arr;
+    },
+  },
+  methods: {
+    ...mapActions(['fetchProducts', 'deleteProduct']),
+    editProduct(product) {
+      this.$emit('edit', product);
+    },
+    onSearch() {
+      if (this.searchTimeout) clearTimeout(this.searchTimeout);
+      this.searchTimeout = setTimeout(() => {
+        this.fetchProducts({ search: this.search, page: 1 });
+      }, 300); // debounce
+    },
+    changePage(page) {
+      if (page < 1 || page > this.lastPage) return;
+      this.fetchProducts({ search: this.search, page });
+    },
+  },
+  mounted() {
+    this.fetchProducts({ page: 1 });
+  },
+};
 </script>

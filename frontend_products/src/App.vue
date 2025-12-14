@@ -1,24 +1,22 @@
 <template>
-  <div class="p-6">
+  <div class="p-6 space-y-6">
+    <ProductForm :product="editingProduct" @created="refreshList" @updated="refreshList" @cancel="editingProduct=null" />
     <ProductList @edit="setEditingProduct" />
   </div>
 </template>
 
-<script>
-import ProductList from './components/ProductList.vue';
+<script setup>
+import ProductForm from './components/ProductForm.vue'
+import ProductList from './components/ProductList.vue'
+import { ref } from 'vue'
 
-export default {
-  components: { ProductList },
-  data() {
-    return { editingProduct: null };
-  },
-  methods: {
-    setEditingProduct(product) {
-      this.editingProduct = product;
-    },
-    refresh() {
-      this.editingProduct = null;
-    },
-  },
-};
+const editingProduct = ref(null)
+
+const setEditingProduct = (product) => {
+  editingProduct.value = product
+}
+
+const refreshList = () => {
+  editingProduct.value = null
+}
 </script>

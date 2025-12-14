@@ -3,15 +3,20 @@ import productApi from '../api/product';
 
 export default createStore({
   state: {
-    products: [],
-    total: 0,
+    products: [],        // products of current page
+    total: 0,            // total number of products
+    currentPage: 1,      // current page
+    lastPage: 1,         // last page
     currentProduct: null,
     loading: false,
   },
+
   mutations: {
     SET_PRODUCTS(state, payload) {
       state.products = payload.data;
       state.total = payload.total;
+      state.currentPage = payload.current_page;
+      state.lastPage = payload.last_page;
     },
     SET_CURRENT_PRODUCT(state, product) {
       state.currentProduct = product;
@@ -27,8 +32,10 @@ export default createStore({
       state.products = state.products.filter(p => p.id !== id);
     },
   },
+
   actions: {
     async fetchProducts({ commit }, params = {}) {
+      // params can include page, search, etc.
       const response = await productApi.getProducts(params);
       commit('SET_PRODUCTS', response.data);
     },
@@ -49,9 +56,12 @@ export default createStore({
       commit('DELETE_PRODUCT', id);
     },
   },
+
   getters: {
     allProducts: state => state.products,
     currentProduct: state => state.currentProduct,
     totalProducts: state => state.total,
+    currentPage: state => state.currentPage,
+    lastPage: state => state.lastPage,
   },
 });
