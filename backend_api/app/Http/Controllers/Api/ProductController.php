@@ -18,14 +18,13 @@ class ProductController extends Controller
         $search = $request->query('search');
 
         $products = Product::query()
-            ->when(
-                $search,
-                fn($q) =>
+            ->when($search, function ($q, $search) {
                 $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('sku', 'like', "%{$search}%")
-            )
-            ->latest()
+                    ->orWhere('sku', 'like', "%{$search}%");
+            })
+            ->orderBy('id', 'desc')
             ->paginate(10);
+
 
         return response()->json($products);
     }

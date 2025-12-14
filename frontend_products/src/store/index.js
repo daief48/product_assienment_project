@@ -3,10 +3,10 @@ import productApi from '../api/product';
 
 export default createStore({
   state: {
-    products: [],        // products of current page
-    total: 0,            // total number of products
-    currentPage: 1,      // current page
-    lastPage: 1,         // last page
+    products: [],       
+    total: 0,          
+    currentPage: 1,    
+    lastPage: 1,       
     currentProduct: null,
     loading: false,
   },
@@ -35,7 +35,6 @@ export default createStore({
 
   actions: {
     async fetchProducts({ commit }, params = {}) {
-      // params can include page, search, etc.
       const response = await productApi.getProducts(params);
       commit('SET_PRODUCTS', response.data);
     },

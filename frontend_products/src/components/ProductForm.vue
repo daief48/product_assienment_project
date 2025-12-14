@@ -1,13 +1,15 @@
 <template>
   <div>
     <h2 class="text-xl font-bold mb-4">{{ isEdit ? 'Edit' : 'Create' }} Product</h2>
-    <form @submit.prevent="submitForm">
-      <input v-model="form.name" placeholder="Name" class="border p-2 mb-2 w-full"/>
-      <input v-model="form.sku" placeholder="SKU" class="border p-2 mb-2 w-full"/>
-      <input v-model="form.price" placeholder="Price" type="number" class="border p-2 mb-2 w-full"/>
-      <input v-model="form.stock" placeholder="Stock" type="number" class="border p-2 mb-2 w-full"/>
-      <input type="file" @change="handleFile" class="border p-2 mb-2 w-full"/>
-      <button class="bg-green-500 text-white px-4 py-2" type="submit">{{ isEdit ? 'Update' : 'Create' }}</button>
+    <form @submit.prevent="submitForm" class="space-y-2">
+      <input v-model="form.name" placeholder="Name" class="border p-2 w-full rounded"/>
+      <input v-model="form.sku" placeholder="SKU" class="border p-2 w-full rounded"/>
+      <input v-model="form.price" placeholder="Price" type="number" class="border p-2 w-full rounded"/>
+      <input v-model="form.stock" placeholder="Stock" type="number" class="border p-2 w-full rounded"/>
+      <input type="file" @change="handleFile" class="border p-2 w-full rounded"/>
+      <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+        {{ isEdit ? 'Update' : 'Create' }}
+      </button>
     </form>
   </div>
 </template>
@@ -48,23 +50,32 @@ export default {
   },
   methods: {
     ...mapActions(['createProduct', 'updateProduct']),
-    handleFile(e) {
-      this.form.image = e.target.files[0];
+    handleFile(event) {
+      this.form.image = event.target.files[0] || null;
     },
-    submitForm() {
+    async submitForm() {
       const data = new FormData();
       for (const key in this.form) {
-        if (this.form[key] !== null) data.append(key, this.form[key]);
+        if (this.form[key] !== null && this.form[key] !== undefined) {
+          data.append(key, this.form[key]);
+        }
       }
 
-      if (this.isEdit) {
-        this.updateProduct({ id: this.form.id, productData: data });
-      } else {
-        this.createProduct(data);
+      try {
+        if (this.isEdit) {
+          await this.updateProduct({ id: this.form.id, productData: data });
+        } else {
+          await this.createProduct(data);
+        }
+        this.$emit('saved'); // emit a more descriptive event
+        this.resetForm();
+      } catch (error) {
+        console.error('Failed to save product:', error);
       }
-
-      // Emit event to parent
-      this.$emit('created');
+    },
+    resetForm() {
+      this.form = { name: '', sku: '', price: '', stock: '', image: null, id: null };
+      this.isEdit = false;
     },
   },
 };
