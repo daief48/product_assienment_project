@@ -35,7 +35,7 @@ class ProductController extends Controller
         return response()->json($product);
     }
 
-        public function store(StoreProductRequest $request)
+    public function store(StoreProductRequest $request)
     {
         $imagePath = $this->imageService->upload(
             $request->file('image'),
@@ -50,4 +50,25 @@ class ProductController extends Controller
         return response()->json($product, 201);
     }
 
+    public function update(UpdateProductRequest $request, Product $product)
+    {
+        $imagePath = $this->imageService->upload(
+            $request->file('image'),
+            'products',
+            $product->image
+        );
+
+        $product->update([
+            ...$request->validated(),
+            'image' => $imagePath,
+        ]);
+
+        return response()->json($product);
+    }
+
+    public function destroy(Product $product)
+    {
+        $product->delete();
+        return response()->json(['message' => 'Product archived successfully']);
+    }
 }
