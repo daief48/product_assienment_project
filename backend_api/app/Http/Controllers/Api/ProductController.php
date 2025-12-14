@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Services\ImageService;
+use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
 
 class ProductController extends Controller
 {
@@ -28,9 +30,24 @@ class ProductController extends Controller
         return response()->json($products);
     }
 
-        public function show(Product $product)
+    public function show(Product $product)
     {
         return response()->json($product);
+    }
+
+        public function store(StoreProductRequest $request)
+    {
+        $imagePath = $this->imageService->upload(
+            $request->file('image'),
+            'products'
+        );
+
+        $product = Product::create([
+            ...$request->validated(),
+            'image' => $imagePath,
+        ]);
+
+        return response()->json($product, 201);
     }
 
 }
